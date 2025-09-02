@@ -1,0 +1,6 @@
+﻿@echo off
+echo 启动 JSON 解析器...
+echo 正在打开浏览器...
+start public/index.html
+echo JSON 解析器已在浏览器中打开！
+pause

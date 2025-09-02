@@ -1,0 +1,415 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 解析器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: #6b7280;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+
+        .textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .error {
+            color: #dc2626;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        .success {
+            color: #059669;
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .json-output {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">JSON 解析器</h1>
+            <p class="subtitle">解析、格式化和验证 JSON 数据</p>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">输入 JSON</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="formatJson()">格式化</button>
+                    <button class="btn btn-secondary" onclick="minifyJson()">压缩</button>
+                    <button class="btn btn-success" onclick="validateJson()">验证</button>
+                    <button class="btn btn-secondary" onclick="clearInput()">清空</button>
+                </div>
+                <textarea id="jsonInput" class="textarea" placeholder="在此输入 JSON 数据...">{
+  "name": "示例数据",
+  "age": 25,
+  "isActive": true,
+  "hobbies": ["编程", "阅读", "旅行"],
+  "address": {
+    "city": "北京",
+    "country": "中国"
+  }
+}</textarea>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">输出结果</h2>
+                <div id="outputContainer">
+                    <div class="json-output" id="jsonOutput">格式化后的 JSON 将显示在这里...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="charCount">0</div>
+                <div class="stat-label">字符数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lineCount">0</div>
+                <div class="stat-label">行数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="objectCount">0</div>
+                <div class="stat-label">对象数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="arrayCount">0</div>
+                <div class="stat-label">数组数</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const jsonInput = document.getElementById('jsonInput');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const outputContainer = document.getElementById('outputContainer');
+        const charCount = document.getElementById('charCount');
+        const lineCount = document.getElementById('lineCount');
+        const objectCount = document.getElementById('objectCount');
+        const arrayCount = document.getElementById('arrayCount');
+
+        // 格式化 JSON
+        function formatJson() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showError('请输入 JSON 数据');
+                    return;
+                }
+
+                const parsed = JSON.parse(input);
+                const formatted = JSON.stringify(parsed, null, 2);
+                jsonOutput.textContent = formatted;
+                showSuccess('JSON 格式化成功！');
+                updateStats(formatted);
+            } catch (error) {
+                showError('JSON 格式错误: ' + error.message);
+            }
+        }
+
+        // 压缩 JSON
+        function minifyJson() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showError('请输入 JSON 数据');
+                    return;
+                }
+
+                const parsed = JSON.parse(input);
+                const minified = JSON.stringify(parsed);
+                jsonOutput.textContent = minified;
+                showSuccess('JSON 压缩成功！');
+                updateStats(minified);
+            } catch (error) {
+                showError('JSON 格式错误: ' + error.message);
+            }
+        }
+
+        // 验证 JSON
+        function validateJson() {
+            try {
+                const input = jsonInput.value.trim();
+                if (!input) {
+                    showError('请输入 JSON 数据');
+                    return;
+                }
+
+                JSON.parse(input);
+                showSuccess('JSON 格式正确！');
+                updateStats(input);
+            } catch (error) {
+                showError('JSON 格式错误: ' + error.message);
+            }
+        }
+
+        // 清空输入
+        function clearInput() {
+            jsonInput.value = '';
+            jsonOutput.textContent = '格式化后的 JSON 将显示在这里...';
+            clearStats();
+            clearMessages();
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            outputContainer.insertBefore(errorDiv, jsonOutput);
+        }
+
+        // 显示成功信息
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            outputContainer.insertBefore(successDiv, jsonOutput);
+        }
+
+        // 清除消息
+        function clearMessages() {
+            const messages = outputContainer.querySelectorAll('.error, .success');
+            messages.forEach(msg => msg.remove());
+        }
+
+        // 更新统计信息
+        function updateStats(text) {
+            charCount.textContent = text.length;
+            lineCount.textContent = text.split('\n').length;
+            
+            try {
+                const parsed = JSON.parse(text);
+                const stats = analyzeJson(parsed);
+                objectCount.textContent = stats.objects;
+                arrayCount.textContent = stats.arrays;
+            } catch (error) {
+                objectCount.textContent = '0';
+                arrayCount.textContent = '0';
+            }
+        }
+
+        // 清除统计信息
+        function clearStats() {
+            charCount.textContent = '0';
+            lineCount.textContent = '0';
+            objectCount.textContent = '0';
+            arrayCount.textContent = '0';
+        }
+
+        // 分析 JSON 结构
+        function analyzeJson(obj, stats = { objects: 0, arrays: 0 }) {
+            if (Array.isArray(obj)) {
+                stats.arrays++;
+                obj.forEach(item => analyzeJson(item, stats));
+            } else if (obj !== null && typeof obj === 'object') {
+                stats.objects++;
+                Object.values(obj).forEach(value => analyzeJson(value, stats));
+            }
+            return stats;
+        }
+
+        // 实时更新统计信息
+        jsonInput.addEventListener('input', function() {
+            const text = this.value;
+            charCount.textContent = text.length;
+            lineCount.textContent = text.split('\n').length;
+            
+            try {
+                const parsed = JSON.parse(text);
+                const stats = analyzeJson(parsed);
+                objectCount.textContent = stats.objects;
+                arrayCount.textContent = stats.arrays;
+            } catch (error) {
+                objectCount.textContent = '0';
+                arrayCount.textContent = '0';
+            }
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            formatJson();
+        });
+    </script>
+</body>
+</html>
