@@ -60,7 +60,7 @@ export default function JsonTreeView({ data, level = 0 }: JsonTreeViewProps) {
     if (typeof value === 'object') {
       return (
         <div style={{ marginLeft: `${indent}px` }}>
-          <div className="text-blue-600 font-medium">{key}: {</div>
+          <div className="text-blue-600 font-medium">{key}: {'{'}</div>
           <JsonTreeView data={value} level={level + 1} />
           <div style={{ marginLeft: `${indent}px` }} className="text-gray-600">}</div>
         </div>
